@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v7
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Abhaengigkeiten installieren
+        run: npm ci
+
+      - name: Anwendung testen
+        env:
+          CI: true
+        run: npm test
+
+      - name: Anwendung bauen
+        run: npm run build
+
+      - name: Build-Verzeichnis pruefen
+        run: ls -la build
+
+      - name: Build als Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: build/
+          if-no-files-found: error
+          retention-days: 7
