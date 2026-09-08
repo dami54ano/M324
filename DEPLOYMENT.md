@@ -13,15 +13,43 @@ Umgesetzt sind CI/CD, Cloud-Config, zwei lokale Ed25519-Schlüssel,
 auf die vorherige Version bei einem fehlgeschlagenen Start.
 Die EC2-Instanz `i-0cdd2539e1d05e972` (`m324-react`) wurde in `us-east-1`
 mit Ubuntu 24.04, t2.micro und 8 GiB gp3 erstellt. Ihre öffentliche Adresse lautet
-aktuell `3.83.172.230` (kann sich nach Stop/Start ändern).
+beim Test `3.83.172.230` (kann sich nach Stop/Start ändern).
 Der Windows-Runner `m324-ec2-deploy` ist unter
 `C:\Users\TACSCDA2\actions-runner-m324` installiert und registriert.
 Die nachfolgenden Kapitel erklären die Einrichtung zum Nachvollziehen.
 
-Der erste vollständige [CI-Lauf mit erfolgreichem Build und SSH-Deployment](https://github.com/dami54ano/M324/actions/runs/34194149974)
-ist grün. Auf EC2 wurden cloud-init inklusive Schema, der aktive systemd-Dienst und
+Der abschliessende [CI-Lauf mit erfolgreichem Build und SSH-Deployment](https://github.com/dami54ano/M324/actions/runs/34194278359)
+ist grün, ebenso der [Docker-Workflow](https://github.com/dami54ano/M324/actions/runs/34194278361).
+Auch das Update der bereits laufenden App wurde erfolgreich geprüft.
+Auf EC2 wurden cloud-init inklusive Schema, der aktive systemd-Dienst und
 die ausgelieferte Versionskennung geprüft. GitHub-Secrets, das Environment
 `production` und der Deploy-Runner sind eingerichtet.
+
+**Abschluss am 08.09.2026:** Das Learner Lab wurde mit **End Lab** beendet,
+der lokale Runner gestoppt (GitHub meldet `offline`) und `ENABLE_EC2_DEPLOY`
+auf `false` gesetzt. Nach dem Lab-Ende konnte die EC2-Konsole den Instanzstatus
+nicht mehr aktualisieren; ein separat bestätigter Status `stopped` liegt deshalb
+nicht vor. Beim nächsten Lab-Start den Instanzstatus und das Budget kontrollieren.
+Die Anwendung ist derzeit nicht als dauerhaft erreichbare Website vorgesehen.
+
+### Später wieder starten
+
+1. Im Learner Lab **Start Lab** wählen und die Instanz `m324-react` prüfen bzw. starten.
+2. Die aktuelle öffentliche IP kontrollieren; bei Änderung `EC2_HOST` aktualisieren
+   und den überprüften Host-Key mit der neuen Adresse in `EC2_KNOWN_HOSTS` sowie
+   der lokalen Datei `m324_known_hosts` hinterlegen (siehe Kapitel zur Host-Key-Prüfung).
+   Bei geänderter eigener IP auch die SSH-Regel der Security Group auf die aktuelle `/32` anpassen.
+3. Auf diesem Windows-PC den Runner starten:
+
+   ```powershell
+   Set-Location "$env:USERPROFILE/actions-runner-m324"
+   .\run.cmd
+   ```
+
+4. Die Repository-Variable `ENABLE_EC2_DEPLOY` auf `true` setzen und unter
+   **Actions → CI → Run workflow** den Branch `main` ausführen.
+5. Nach dem Test den Runner stoppen, die Variable wieder deaktivieren und die
+   EC2-Instanz möglichst noch vor **End Lab** stoppen und ihren Status überprüfen.
 
 Die tatsächliche Host-Key-Erstaufnahme erfolgte nach Abgleich der öffentlichen IP
 mit der angemeldeten EC2-Konsole nach dem Prinzip Trust on First Use (TOFU).
@@ -336,8 +364,10 @@ Gelegentlich `sudo du -sh /opt/ref-card/releases /home/ubuntu/incoming` kontroll
 und nur gezielt nicht mehr benötigte Releases entfernen; aktive und letzte funktionierende
 Version behalten. Nach Ende der Übung Deploy-Secret und autorisierten Deploy-Key widerrufen.
 
-**Anwendungsstatus:** Die Instanz wurde für die Übung erstellt. Nach dem Nachweis
-müssen Instanz und Runner beendet werden; bestehende Ressourcen nicht pauschal löschen.
+**Anwendungsstatus:** Nach dem erfolgreichen Nachweis wurden das Lab beendet,
+der Runner gestoppt und weitere Deployments deaktiviert. Die Einschränkung bei
+der abschliessenden EC2-Statusprüfung ist oben dokumentiert. Die Ressourcen und
+Schlüssel bleiben für eine Wiederaufnahme erhalten.
 
 ## Lokal prüfen und Fehler eingrenzen
 
