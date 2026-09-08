@@ -42,7 +42,17 @@ Die App kann nun im Browser unter der URL http://localhost:3000 betrachtet werde
 
 
 ### Inbetriebnahme mit Docker Container
-folgt...
+```bash
+docker build -t ref-card:local .
+docker run --rm -p 8080:80 ref-card:local
+```
+
+Die Anwendung ist danach unter `http://localhost:8080` erreichbar.
+
+### CI/CD und AWS-Deployment
+
+Die vollständige Anleitung für GitHub Actions, SSH-Schlüssel, EC2, systemd,
+Rollback und die Reflexionsfragen aus Aufgabe 20.1 steht in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 
 

@@ -1,0 +1,22 @@
+#cloud-config
+# Replace both public keys, or use the generated cloud-config.local.yaml.
+users:
+  - name: ubuntu
+    groups: [adm, sudo]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ADMIN_PUBLIC_KEY
+      - DEPLOY_PUBLIC_KEY
+ssh_pwauth: false
+disable_root: true
+package_update: true
+packages:
+  - nginx
+  - curl
+  - util-linux
+runcmd:
+  - [systemctl, disable, --now, nginx.service]
+  - [install, -d, -m, '0755', /opt/ref-card/releases]
+  - [install, -d, -o, ubuntu, -g, ubuntu, -m, '0700', /home/ubuntu/incoming]

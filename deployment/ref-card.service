@@ -1,0 +1,17 @@
+[Unit]
+Description=M324 React application (Nginx)
+After=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/sbin/nginx -t -c /opt/ref-card/current/deployment/nginx.conf
+ExecStart=/usr/sbin/nginx -c /opt/ref-card/current/deployment/nginx.conf -g "daemon off;"
+ExecReload=/bin/kill -HUP $MAINPID
+KillSignal=SIGQUIT
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=3
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

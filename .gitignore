@@ -23,3 +23,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local deployment configuration and SSH credentials
+cloud-config.local.yaml
+*.pem
+*_key
+*_key.pub

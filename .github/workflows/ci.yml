@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -44,3 +45,54 @@ jobs:
           path: build/
           if-no-files-found: error
           retention-days: 7
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.ENABLE_EC2_DEPLOY == 'true'
+    # Runner in the same network as the administrator (Security Group: My IP).
+    runs-on: [self-hosted, ec2-deploy]
+    timeout-minutes: 15
+    environment: production
+    concurrency:
+      group: ec2-production
+      cancel-in-progress: false
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v7
+
+      - name: Getesteten Build herunterladen
+        uses: actions/download-artifact@v4
+        with:
+          name: react-build
+          path: build
+
+      - name: Build per SSH ausrollen
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          : "${EC2_HOST:?Missing EC2_HOST}"
+          : "${EC2_USER:?Missing EC2_USER}"
+          : "${EC2_SSH_KEY:?Missing EC2_SSH_KEY}"
+          : "${EC2_KNOWN_HOSTS:?Missing EC2_KNOWN_HOSTS}"
+          [[ "$EC2_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]]
+          [[ "$EC2_USER" == ubuntu ]]
+          release="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '%s\n' "$release" > build/version.txt
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf -- "$ssh_dir"' EXIT
+          chmod 700 "$ssh_dir"
+          printf '%s\n' "$EC2_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$EC2_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+          options=(-i "$ssh_dir/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$ssh_dir/known_hosts" -o ConnectTimeout=15)
+          remote="/home/ubuntu/incoming/$release"
+          ssh "${options[@]}" "$EC2_USER@$EC2_HOST" "mkdir -m 700 '$remote'"
+          scp "${options[@]}" -r build deployment deploy.sh "$EC2_USER@$EC2_HOST:$remote/"
+          ssh "${options[@]}" "$EC2_USER@$EC2_HOST" "bash '$remote/deploy.sh' '$remote' '$release'"
+          actual="$(curl --fail --silent --show-error --max-time 15 "http://$EC2_HOST:8080/version.txt")"
+          [[ "$actual" == "$release" ]]
