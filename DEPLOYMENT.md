@@ -18,6 +18,16 @@ Der Windows-Runner `m324-ec2-deploy` ist unter
 `C:\Users\TACSCDA2\actions-runner-m324` installiert und registriert.
 Die nachfolgenden Kapitel erklären die Einrichtung zum Nachvollziehen.
 
+Die tatsächliche Host-Key-Erstaufnahme erfolgte nach Abgleich der öffentlichen IP
+mit der angemeldeten EC2-Konsole nach dem Prinzip Trust on First Use (TOFU).
+Das AWS-Systemprotokoll blieb auch nach einem Neustart leer; eine unabhängige
+Bestätigung des Fingerprints war deshalb nicht möglich. Gepinnt ist Ed25519
+`SHA256:U/XPDfoWlF5Dne9c6yLAv+JI740CTgGO72igDM4y7So` in
+`C:\Users\TACSCDA2\.ssh\m324_known_hosts` und im GitHub-Secret.
+Die folgende Anleitung beschreibt die vorzuziehende unabhängige Prüfung für eine
+Neueinrichtung; TOFU schützt bei der allerersten Verbindung nicht vor einem Angreifer
+auf dem Verbindungsweg, lehnt aber spätere abweichende Host-Keys ab.
+
 Lokal geprüft: React-Test bestanden (1/1), Produktionsbuild erfolgreich,
 YAML- und Bash-Syntax gültig. Eine isolierte Simulation mit ersetzten Systembefehlen
 prüfte Erstdeployment, fehlgeschlagene HTTP-Prüfung, Rückkehr zur vorherigen Version
@@ -121,6 +131,8 @@ Build und Tests laufen auf `ubuntu-latest` bei GitHub.
 4. Git for Windows mit Git Bash muss installiert sein (hier bereits vorhanden).
    Der Workflow führt seine Shell-Schritte ausdrücklich mit Bash aus. Unter Linux
    alternativ `git`, `openssh-client` und `curl` installieren und Linux x64 registrieren.
+   Auf Windows setzt ein Vorbereitungsschritt Git Bash vor den alten WSL-Bash-Starter
+   im PATH. Dadurch funktioniert das Deployment auch ohne eingerichtetes WSL.
 
 5. Unter Windows mit `.\run.cmd`, unter Linux mit `./run.sh` im Runner-Verzeichnis starten und das Terminal während des
    Deployments offen lassen. In GitHub muss der Runner **Idle** anzeigen.

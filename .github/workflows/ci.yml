@@ -66,6 +66,17 @@ jobs:
           name: react-build
           path: build
 
+      - name: Git Bash auf Windows verwenden
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $gitRoot = Split-Path (Split-Path (Get-Command git.exe).Source -Parent) -Parent
+          $gitBashDir = Join-Path $gitRoot 'bin'
+          if (-not (Test-Path (Join-Path $gitBashDir 'bash.exe'))) {
+            throw 'Git Bash wurde nicht gefunden. Git for Windows installieren.'
+          }
+          $gitBashDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Build per SSH ausrollen
         shell: bash
         env:
