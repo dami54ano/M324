@@ -239,6 +239,7 @@ Auf EC2:
 ```bash
 sudo systemctl status ref-card.service --no-pager
 sudo journalctl -u ref-card.service -n 80 --no-pager
+sudo tail -n 20 /var/log/nginx/ref-card-access.log
 curl -f http://127.0.0.1:8080/version.txt
 readlink -f /opt/ref-card/current
 ```

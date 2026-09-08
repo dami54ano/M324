@@ -20,7 +20,15 @@ if sudo test -e "$release"; then
     echo 'Release already exists; rerun the workflow to get a new attempt ID.' >&2
     exit 1
 fi
-previous="$(readlink -f "$base/current" || true)"
+# -e requires an existing target: -f also returns a path for a missing final
+# component, which could otherwise become a self-referencing rollback link.
+previous=""
+if [[ -L "$base/current" ]]; then
+    previous="$(readlink -e "$base/current" || true)"
+elif [[ -e "$base/current" ]]; then
+    echo 'Expected current to be a symlink; refusing to replace a real directory.' >&2
+    exit 1
+fi
 sudo mkdir "$release"
 sudo cp -R "$source_dir/build" "$source_dir/deployment" "$release/"
 sudo chown -R root:root "$release"
