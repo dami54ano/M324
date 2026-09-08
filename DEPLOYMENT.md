@@ -8,7 +8,7 @@ vorhandene React-Projekt verwendet: `npm run build` erzeugt statische Dateien,
 Nginx liefert sie auf Port **8080** aus. Maven, Java und eine JAR-Datei sind hier
 nicht nötig. Das Lernziel (Build, SSH, cloud-init, Secrets, systemd) bleibt erhalten.
 
-Vorbereitet sind CI/CD, Cloud-Config, zwei lokale Ed25519-Schlüssel,
+Umgesetzt sind CI/CD, Cloud-Config, zwei lokale Ed25519-Schlüssel,
 `deploy.sh`, eine systemd-Unit, Gesundheitsprüfung und automatisches Zurückschalten
 auf die vorherige Version bei einem fehlgeschlagenen Start.
 Die EC2-Instanz `i-0cdd2539e1d05e972` (`m324-react`) wurde in `us-east-1`
@@ -17,6 +17,11 @@ aktuell `3.83.172.230` (kann sich nach Stop/Start ändern).
 Der Windows-Runner `m324-ec2-deploy` ist unter
 `C:\Users\TACSCDA2\actions-runner-m324` installiert und registriert.
 Die nachfolgenden Kapitel erklären die Einrichtung zum Nachvollziehen.
+
+Der erste vollständige [CI-Lauf mit erfolgreichem Build und SSH-Deployment](https://github.com/dami54ano/M324/actions/runs/34194149974)
+ist grün. Auf EC2 wurden cloud-init inklusive Schema, der aktive systemd-Dienst und
+die ausgelieferte Versionskennung geprüft. GitHub-Secrets, das Environment
+`production` und der Deploy-Runner sind eingerichtet.
 
 Die tatsächliche Host-Key-Erstaufnahme erfolgte nach Abgleich der öffentlichen IP
 mit der angemeldeten EC2-Konsole nach dem Prinzip Trust on First Use (TOFU).
@@ -29,10 +34,12 @@ Neueinrichtung; TOFU schützt bei der allerersten Verbindung nicht vor einem Ang
 auf dem Verbindungsweg, lehnt aber spätere abweichende Host-Keys ab.
 
 Lokal geprüft: React-Test bestanden (1/1), Produktionsbuild erfolgreich,
-YAML- und Bash-Syntax gültig. Eine isolierte Simulation mit ersetzten Systembefehlen
-prüfte Erstdeployment, fehlgeschlagene HTTP-Prüfung, Rückkehr zur vorherigen Version
-und ein nachfolgendes erfolgreiches Deployment. Das ersetzt noch keinen echten
-Test von Nginx, systemd, SSH und cloud-init auf Ubuntu/EC2.
+YAML- und Bash-Syntax gültig. `deployment/test_deploy.py` prüft mit echten
+Linux-Dateioperationen und simuliertem Dienst/HTTP: fehlgeschlagenes Erstdeployment,
+erfolgreiches Erstdeployment, Rollback eines Updates und Erfolg nach dem Rollback.
+Alle vier Fälle wurden auf Ubuntu ausgeführt und sind zusätzlich Teil der CI.
+Der echte GitHub-Deploy-Job ergänzt diese Simulation durch SCP, SSH, Nginx,
+systemd und eine öffentliche HTTP-Prüfung.
 
 ## 1. SSH-Schlüssel
 
@@ -208,7 +215,8 @@ Danach **Actions → CI** öffnen. Alternativ nach dem Push unter **Run workflow
 
 Ablauf:
 
-1. `npm ci` installiert die im Lockfile festgelegten Abhängigkeiten.
+1. Der Linux-Regressionstest prüft Deployment und Rollback; `npm ci` installiert
+   anschliessend die im Lockfile festgelegten Abhängigkeiten.
 2. Der React-Test läuft; bei einem Fehler gibt es kein Deployment.
 3. `npm run build` erzeugt den Build. `upload-artifact` speichert ihn im Workflow-Lauf.
 4. `deploy` wartet durch `needs: build` auf den erfolgreichen Build. Er läuft nur auf
@@ -344,6 +352,12 @@ npm run build
 
 Das Projekt legt Node 20 / npm 10 fest. Lokal war Node 22 / npm 11 vorhanden;
 für identische Bedingungen die Projektversionen verwenden.
+
+Die Deployment-Regressionstests lassen sich unter Linux separat ausführen:
+
+```bash
+python3 deployment/test_deploy.py
+```
 
 | Symptom | Prüfen |
 |---|---|

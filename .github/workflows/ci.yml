@@ -18,6 +18,9 @@ jobs:
       - name: Repository auschecken
         uses: actions/checkout@v7
 
+      - name: Deployment und Rollback unter Linux testen
+        run: python3 deployment/test_deploy.py
+
       - name: Node.js einrichten
         uses: actions/setup-node@v7
         with:
